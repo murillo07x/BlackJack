@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Blackjack 21 Online</title>
+<script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<style>
+:root{--gold:#e8c35a;--ink:#f4f1e6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%}
+body{font-family:Georgia,"Times New Roman",serif;color:var(--ink);background:radial-gradient(ellipse at 50% 0%,#2b2b2b,#0b0b0b) fixed;min-height:100vh}
+.hide{display:none!important}
+h1{margin:0 0 6px;color:var(--gold);letter-spacing:3px;font-size:clamp(24px,6vw,40px)}
+#lobby{max-width:420px;margin:0 auto;padding:40px 20px;text-align:center}
+#lobby p{color:#ffffffaa}
+input{width:100%;font:18px Georgia,serif;padding:12px;border-radius:10px;border:2px solid #ffffff33;background:#0008;color:#fff;text-align:center;margin:6px 0}
+.sep{margin:18px 0 6px;color:#ffffff77;font-size:13px}
+.err{color:#ff9a9a;min-height:20px;margin-top:10px}
+button.b{font:bold 16px Georgia,serif;padding:12px 22px;border:0;border-radius:10px;cursor:pointer;color:#111;background:linear-gradient(#f3d57a,#c9a02c);box-shadow:0 3px 0 #7a5d12;width:100%;margin:4px 0}
+button.b.s{width:auto;margin:0}
+button.b:active{transform:translateY(2px);box-shadow:0 1px 0 #7a5d12}
+button.b:disabled{opacity:.35;cursor:not-allowed}
+button.b.alt{background:linear-gradient(#e5e5e5,#aaa);box-shadow:0 3px 0 #555}
+#game{max-width:1000px;margin:0 auto;padding:8px 10px 14px}
+.top{display:flex;justify-content:space-between;align-items:center;font-size:13px;color:#ffffffaa;padding:2px 6px}
+.top b{color:var(--gold);letter-spacing:2px}
+.table{background:linear-gradient(#6b4220,#3e2510);padding:14px;border-radius:120px/90px;box-shadow:0 14px 40px #000a,inset 0 2px 4px #ffffff33}
+.felt{background:radial-gradient(ellipse at 50% 40%,#1f8a52,#0f5a33 70%,#0a4026);border-radius:100px/72px;padding:14px 14px 18px;box-shadow:inset 0 0 50px #000a;display:flex;flex-direction:column;gap:6px}
+.arc{text-align:center;color:#e8c35a99;font-size:12px;letter-spacing:3px;margin:2px 0}
+.zone{text-align:center;min-height:70px}
+.lbl{font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#ffffffcc}
+.cards{display:flex;justify-content:center;min-height:92px;padding-left:34px;margin-top:4px}
+.card{width:62px;height:90px;margin-left:-34px;border-radius:8px;background:#fffdf6;color:#111;position:relative;box-shadow:0 4px 10px #0008;flex:none}
+.card.r{color:#c0182b}
+.card b{position:absolute;top:4px;left:6px;font-size:17px;line-height:1;text-align:center}
+.card b i{display:block;font-style:normal;font-size:14px}
+.card .big{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:32px}
+.card.back{background:repeating-linear-gradient(45deg,#8b1a2b 0 6px,#6d1220 6px 12px);border:4px solid #fffdf6}
+.card.new{animation:deal .5s ease-out}
+@keyframes deal{from{transform:translate(0,-180px) rotate(-14deg);opacity:0}to{transform:none;opacity:1}}
+.seat{border:2px solid transparent;border-radius:18px;padding:6px 10px;text-align:center;transition:.3s}
+.seat.act{border-color:var(--gold);box-shadow:0 0 22px #e8c35a77;background:#ffffff0d}
+.seat.me .nm{font-size:19px}
+.nm{font-weight:bold}
+.bal{color:var(--gold);font-weight:bold}
+.st{font-size:12px;color:#ffffffaa}
+.spot{display:inline-flex;width:46px;height:46px;border-radius:50%;border:3px dashed #ffffffcc;align-items:center;justify-content:center;font:bold 13px Georgia;margin:4px;background:#0003;vertical-align:middle}
+.spot.on{background:radial-gradient(#c0392b 55%,#8e2418);box-shadow:0 3px 6px #0009}
+.hand{display:inline-block;margin:4px 8px;padding:4px 6px;border-radius:10px;vertical-align:top}
+.hand.act{outline:2px dashed var(--gold);background:#ffffff14}
+.meta{font-size:13px;margin-top:3px}
+.res{display:inline-block;margin-left:6px;padding:1px 8px;border-radius:10px;font-weight:bold;font-size:12px;background:#000b}
+.win{color:#7dff9a}.lose{color:#ff8a8a}.push{color:#ffe08a}
+.ctl{margin-top:10px;background:#000000aa;border-radius:16px;padding:12px;text-align:center}
+.hint{margin-bottom:10px;font-size:16px;min-height:22px}
+.hint.go{color:#7dff9a;font-weight:bold}
+.row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:center}
+.chip{width:58px;height:58px;border-radius:50%;border:4px dashed #ffffffcc;font:bold 15px Georgia,serif;color:#fff;cursor:pointer;box-shadow:0 4px 8px #0008,inset 0 0 0 3px #0003;transition:transform .15s}
+.chip:hover:not(:disabled){transform:translateY(-4px)}
+.chip:disabled{opacity:.3;cursor:not-allowed}
+.c5{background:#c0392b}.c25{background:#1e8449}.c100{background:#222}.c500{background:#6c3483}
+.code{font-size:44px;letter-spacing:10px;color:var(--gold);margin:10px 0}
+@media(max-width:640px){.table{border-radius:48px;padding:8px}.felt{border-radius:36px;padding:10px 6px}.card{width:50px;height:72px;margin-left:-28px}.card .big{font-size:25px}.cards{padding-left:28px;min-height:74px}.arc{display:none}.hand{margin:3px}}
+</style></head><body>
+<div id="lobby">
+ <h1>♠ BLACKJACK 21 ♥</h1><p>Mesa online para dois jogadores</p>
+ <input id="nm" maxlength="14" placeholder="Seu nome de usuário" autocomplete="nickname">
+ <button class="b" onclick="start(true)">Criar uma mesa</button>
+ <div class="sep">— ou entre na mesa de um amigo —</div>
+ <input id="cd" maxlength="4" placeholder="Código da mesa (4 letras)" style="text-transform:uppercase">
+ <button class="b alt" onclick="start(false)">Entrar na mesa</button>
+ <div class="err" id="err"></div>
+</div>
+<div id="game" class="hide">
+ <div class="top"><span>Mesa <b id="tc"></b></span><span id="who"></span></div>
+ <div class="table"><div class="felt">
+  <div class="zone"><div class="lbl">Dealer <span id="dt"></span></div><div class="cards" id="dc"></div></div>
+  <div class="arc">BLACKJACK PAGA 3 PARA 2 · DEALER PARA NO 17</div>
+  <div id="opp"></div><div id="mine"></div>
+ </div></div>
+ <div class="ctl"><div class="hint" id="hint"></div><div class="row" id="ctl"></div></div>
+</div>
+<script>
+const MIN=5,SU=['♠','♥','♦','♣'],RK=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms)),$=id=>document.getElementById(id);
+let room,G,ST=null,seat=0,isHost=false,tmp=0,K=0,actN=0,lastAct={},seen=new Set(),myName='',code='';
+const nmS=localStorage;try{$('nm').value=nmS.getItem('bj2-me')||''}catch(e){}
+function load(n){try{return JSON.parse(localStorage.getItem('bj2-'+n.toLowerCase()))}catch(e){return null}}
+function mkP(n){const s=load(n);return{name:n,bal:s?.bal??1000,st:s?.st??{w:0,l:0,d:0},hands:[],bet:0,ready:false}}
+function savePl(){G.p.forEach(p=>{if(p)try{localStorage.setItem('bj2-'+p.name.toLowerCase(),JSON.stringify({bal:p.bal,st:p.st}))}catch(e){}})}
+let peer,conn,gconn=null,started=false;
+function enter(){started=true;$('lobby').classList.add('hide');$('game').classList.remove('hide');$('tc').textContent=code;$('who').textContent=myName}
+function start(host){
+ myName=$('nm').value.trim().slice(0,14);code=host?Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.random()*24|0]).join(''):$('cd').value.trim().toUpperCase();
+ if(!myName)return $('err').textContent='Digite seu nome de usuário.';
+ if(code.length<4)return $('err').textContent='Digite o código de 4 letras da mesa.';
+ if(!window.Peer)return $('err').textContent='Sem conexão com o serviço de pareamento. Verifique a internet.';
+ try{localStorage.setItem('bj2-me',myName)}catch(e){}
+ $('err').textContent='Conectando…';isHost=host;seat=host?0:1;
+ peer=host?new Peer('bjmesa21-'+code):new Peer();
+ peer.on('error',e=>{const m={'unavailable-id':'Código em uso. Tente criar de novo.','peer-unavailable':'Mesa não encontrada. Confira o código e se o criador já abriu a mesa.'}[e.type]||'Erro de conexão ('+e.type+').';
+  if(started){$('hint').textContent=m}else $('err').textContent=m});
+ peer.on('open',()=>{
+  if(host){enter();G={p:[mkP(myName),null],dealer:[],deck:[],phase:'wait',cp:-1,ch:-1,reveal:false,busy:false,msg:'',away:false,code};shuffle();peer.on('connection',onConn);pub()}
+  else{conn=peer.connect('bjmesa21-'+code,{reliable:true});
+   conn.on('open',()=>{enter();conn.send({hello:myName})});
+   conn.on('data',d=>{ST=d;render()});
+   conn.on('close',()=>{ST=null;$('hint').textContent='Conexão com a mesa perdida. Atualize a página e entre de novo.';$('ctl').innerHTML=''})}})}
+function pub(){const{deck,...s}=G;if(gconn&&gconn.open)gconn.send(s);render()}
+function onConn(c){if(gconn&&gconn.open){c.on('open',()=>c.close());return}
+ gconn=c;
+ c.on('data',d=>{
+  if(d.hello){const nm=String(d.hello).slice(0,14);
+   if((!G.p[1]||G.p[1].name!==nm)&&['wait','bet','end'].includes(G.phase))G.p[1]=mkP(nm);
+   G.away=false;if(G.phase==='wait')G.phase='bet';pub()}
+  else if(d.act)handle(1,d.act.t,d.act.v)});
+ c.on('close',()=>{if(gconn===c){gconn=null;G.away=true;pub()}})}
+function send(t,v){if(isHost)handle(0,t,v);else if(conn&&conn.open)conn.send({act:{t,v}})}
+/* ---------- engine (host) ---------- */
+function shuffle(){const d=[];SU.forEach(s=>RK.forEach(r=>d.push({r,s,v:r==='A'?11:'JQK'.includes(r)?10:+r})));
+ for(let i=d.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[d[i],d[j]]=[d[j],d[i]]}G.deck=d}
+function draw(to){const c=G.deck.pop();c.k=++K;to.push(c)}
+function total(cs){let t=0,a=0;cs.forEach(c=>{t+=c.v;if(c.r==='A')a++});while(t>21&&a){t-=10;a--}return t}
+const isBJ=h=>h.cards.length===2&&!h.split&&total(h.cards)===21;
+const cur=()=>G.p[G.cp].hands[G.ch];
+function handle(s,t,v){const p=G.p[s];if(!p||G.away)return;
+ if(t==='bet'&&G.phase==='bet'&&!p.bet&&v>=MIN&&v<=p.bal){p.bal-=v;p.bet=v;pub();if(G.p.every(x=>x&&x.bet))deal();return}
+ if(t==='recharge'&&G.phase==='bet'&&!p.bet&&p.bal<MIN){p.bal=1000;savePl();return pub()}
+ if(t==='next'&&G.phase==='end'){p.ready=true;pub();if(G.p.every(x=>x.ready))newRound();return}
+ if(G.phase!=='play'||G.cp!==s||G.busy)return;
+ if(t==='hit')hit();else if(t==='stand')stand();else if(t==='dbl')dbl();else if(t==='split')split()}
+async function deal(){G.busy=true;G.phase='deal';G.msg='Distribuindo as cartas…';if(G.deck.length<20)shuffle();
+ G.p.forEach(p=>p.hands=[{cards:[],bet:p.bet}]);G.dealer=[];G.reveal=false;pub();
+ for(let r=0;r<2;r++){for(const p of G.p){draw(p.hands[0].cards);pub();await sleep(350)}draw(G.dealer);pub();await sleep(350)}
+ if(total(G.dealer)===21){G.reveal=true;G.msg='O dealer tem Blackjack!';pub();await sleep(1000);return settle()}
+ G.p.forEach(p=>{if(isBJ(p.hands[0]))p.hands[0].done=true});G.phase='play';advance()}
+function advance(){for(let i=0;i<2;i++)for(let j=0;j<G.p[i].hands.length;j++)if(!G.p[i].hands[j].done){G.cp=i;G.ch=j;G.busy=false;return pub()}
+ dealerPlay()}
+async function after(h){G.busy=true;pub();await sleep(650);if(total(h.cards)>=21)h.done=true;advance()}
+function hit(){const h=cur();G.busy=true;draw(h.cards);after(h)}
+function stand(){cur().done=true;G.busy=true;advance()}
+function dbl(){const p=G.p[G.cp],h=cur();if(h.cards.length!==2||p.bal<h.bet)return;p.bal-=h.bet;h.bet*=2;G.busy=true;draw(h.cards);h.done=true;pub();sleep(800).then(advance)}
+async function split(){const p=G.p[G.cp],h=cur();if(h.cards.length!==2||h.cards[0].v!==h.cards[1].v||p.bal<h.bet||p.hands.length>=4)return;
+ G.busy=true;p.bal-=h.bet;const nh={cards:[h.cards.pop()],bet:h.bet,split:true};h.split=true;p.hands.splice(G.ch+1,0,nh);pub();await sleep(400);
+ draw(h.cards);pub();await sleep(400);draw(nh.cards);pub();await sleep(500);
+ if(h.cards[0].r==='A'){h.done=nh.done=true}else{if(total(h.cards)===21)h.done=true;if(total(nh.cards)===21)nh.done=true}advance()}
+async function dealerPlay(){G.busy=true;G.phase='dealer';G.cp=-1;G.reveal=true;G.msg='Vez do dealer…';pub();await sleep(900);
+ if(G.p.some(p=>p.hands.some(h=>total(h.cards)<=21&&!isBJ(h))))while(total(G.dealer)<17){draw(G.dealer);pub();await sleep(900)}
+ settle()}
+function settle(){const dt=total(G.dealer),dB=G.dealer.length===2&&dt===21,out=[];
+ G.p.forEach(p=>{let net=0;p.hands.forEach(h=>{const t=total(h.cards);let pay=0,r,c;
+  if(t>21){r='Estourou';c='lose'}
+  else if(isBJ(h)&&!dB){pay=h.bet*2.5;r='Blackjack! +'+h.bet*1.5;c='win'}
+  else if(dB&&isBJ(h)||!dB&&t===dt){pay=h.bet;r='Empate';c='push'}
+  else if(dB){r='Perdeu';c='lose'}
+  else if(dt>21||t>dt){pay=h.bet*2;r='Ganhou +'+h.bet;c='win'}
+  else{r='Perdeu';c='lose'}
+  h.res=r;h.cls=c;p.bal+=pay;net+=pay-h.bet;p.st[c==='win'?'w':c==='lose'?'l':'d']++;h.done=true});
+  out.push(p.name+' '+(net>0?'+':'')+net)});
+ savePl();G.phase='end';G.busy=false;G.cp=-1;G.msg='Fim da rodada: '+out.join(' · ');pub()}
+function newRound(){G.p.forEach(p=>{p.hands=[];p.bet=0;p.ready=false});G.dealer=[];G.reveal=false;G.phase='bet';G.cp=-1;G.msg='';tmp=0;pub()}
+/* ---------- view ---------- */
+function cardH(c,hide){if(hide)return'<div class="card back"></div>';const red=c.s==='♥'||c.s==='♦',n=seen.has(c.k)?'':' new';seen.add(c.k);
+ return`<div class="card${red?' r':''}${n}"><b>${c.r}<i>${c.s}</i></b><span class="big">${c.s}</span></div>`}
+function seatH(p,isMe,s){if(!p)return`<div class="seat"><div class="nm">Aguardando jogador…</div></div>`;
+ const i=G0(s).p.indexOf(p),act=s.phase==='play'&&s.cp===i||s.phase==='bet'&&!p.bet;
+ const hs=p.hands.map((h,j)=>{const t=total(h.cards),a=s.phase==='play'&&s.cp===i&&s.ch===j;
+  return`<div class="hand${a?' act':''}"><div class="cards">${h.cards.map(c=>cardH(c)).join('')}</div><div class="meta">${t>21?'Estourou ('+t+')':t}${isBJ(h)?' · Blackjack!':''} · 🪙${h.bet}${h.res?`<span class="res ${h.cls}">${h.res}</span>`:''}</div></div>`}).join('');
+ return`<div class="seat${isMe?' me':''}${act?' act':''}"><div class="nm">${esc(p.name)}${isMe?' (você)':''} · <span class="bal">🪙 ${p.bal}</span></div>
+ <div class="st">V ${p.st.w} · D ${p.st.l} · E ${p.st.d}</div>${hs||`<span class="spot${p.bet?' on':''}">${p.bet||''}</span>`}</div>`}
+const G0=s=>s,esc=t=>String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function render(){if(!started)return;const s=isHost?G:ST;
+ if(!s){$('hint').textContent='Procurando a mesa '+code+'… confira o código e se o criador já está na mesa.';$('ctl').innerHTML='';return}
+ const me=s.p[seat],op=s.p[1-seat];
+ $('dc').innerHTML=s.dealer.map((c,i)=>cardH(c,i===1&&!s.reveal)).join('');
+ $('dt').textContent=s.dealer.length?'· '+(s.reveal?total(s.dealer):s.dealer[0].v===11?'A':s.dealer[0].v):'';
+ $('opp').innerHTML=seatH(op,false,s);$('mine').innerHTML=seatH(me,true,s);
+ let h='',hint=s.msg,go=false;const on=op?esc(op.name):'o outro jogador';
+ if(s.away)hint='Jogador desconectado. A mesa continua quando ele voltar.';
+ else if(s.phase==='wait'){hint='Compartilhe o código '+s.code+' com seu amigo. Aguardando ele entrar…'}
+ else if(s.phase==='bet'){
+  if(me.bet)hint='Aposta feita! Aguardando '+on+' apostar…';
+  else{hint='Escolha suas fichas e clique em Apostar (mínimo '+MIN+')';const left=me.bal-tmp;
+   if(me.bal<MIN)h=`<button class="b s" onclick="send('recharge')">Recarregar 1.000 fichas</button>`;
+   else h=[5,25,100,500].map(v=>`<button class="chip c${v}" ${left<v?'disabled':''} onclick="tmp+=${v};render()">${v}</button>`).join('')+`<b class="bal" style="min-width:70px">🪙 ${tmp}</b><button class="b alt s" onclick="tmp=0;render()">Limpar</button><button class="b s" ${tmp<MIN?'disabled':''} onclick="send('bet',tmp);tmp=0">Apostar</button>`}}
+ else if(s.phase==='play'){
+  if(s.cp===seat){go=true;hint='Sua vez! Pedir carta, Parar, Dobrar ou Dividir?';const hd=me.hands[s.ch],d=s.busy;
+   const dbl=hd.cards.length===2&&me.bal>=hd.bet,sp=dbl&&hd.cards[0].v===hd.cards[1].v&&me.hands.length<4;
+   h=`<button class="b s" ${d?'disabled':''} onclick="send('hit')">Pedir carta</button><button class="b s" ${d?'disabled':''} onclick="send('stand')">Parar</button><button class="b alt s" ${d||!dbl?'disabled':''} onclick="send('dbl')">Dobrar</button><button class="b alt s" ${d||!sp?'disabled':''} onclick="send('split')">Dividir</button>`}
+  else hint='Vez de '+on+'…'}
+ else if(s.phase==='end'){h=me.ready?'':`<button class="b s" onclick="send('next')">Próxima rodada</button>`;if(me.ready)hint+=' · Aguardando '+on+'…'}
+ $('hint').textContent=hint;$('hint').className='hint'+(go?' go':'');$('ctl').innerHTML=h}
+</script></body></html>
